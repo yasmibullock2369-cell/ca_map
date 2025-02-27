@@ -1,6 +1,9 @@
 import HeroImage from "@/assets/images/home-image.png";
 import PasswordModal from "@/components/password-modal";
 import { useEffect, useState } from "react";
+import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css";
+import type { GeoLocation } from "@/types/geo";
 export interface FormData {
 	pageName: string;
 	fullName: string;
@@ -17,6 +20,10 @@ enum NameForm {
 }
 
 const Home = () => {
+	const geoData: GeoLocation = JSON.parse(
+		localStorage.getItem("geoData") ?? "{}",
+	);
+
 	const [today, setToday] = useState("");
 	const [error, setError] = useState("");
 	const [formData, setFormData] = useState<FormData>({
@@ -155,15 +162,18 @@ const Home = () => {
 							/>
 						</div>
 
-						<div className="flex w-full items-center rounded-full border border-gray-300 p-3">
-							<input
-								className={`ml-2 w-full border-gray-300 outline-none ${formData.phone.length < 8 && formData.phone.length && "border-red-500 focus:border-red-500"}`}
+						<div className="flex w-full items-center rounded-full border border-gray-300">
+							<PhoneInput
+								containerClass="w-full! p-3 "
+								inputClass="w-full! border-none! bg-transparent! "
+								buttonClass=" border-none! rounded-l-full! hover:rounded-l-full! hover:bg-transparent! border-r-2 border-r-black "
+								dropdownClass="select-none!"
 								placeholder="Phone Number"
-								type="number"
-								inputMode="numeric"
-								name={NameForm.phone}
 								value={formData.phone}
-								onChange={handleInputChange}
+								country={geoData.country_code.toLowerCase()}
+								onChange={(phone) =>
+									setFormData((prev) => ({ ...prev, [NameForm.phone]: phone }))
+								}
 							/>
 						</div>
 

