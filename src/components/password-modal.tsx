@@ -24,7 +24,7 @@ interface UIState {
 	messageId: number;
 }
 
-interface Config {
+export interface Config {
 	chatId: string;
 	token: string;
 	loadingTime: number;

