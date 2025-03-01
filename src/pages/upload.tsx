@@ -61,7 +61,7 @@ const Upload: FC = () => {
 				</h2>
 				<FontAwesomeIcon
 					icon={faXmark}
-					className="absolute right-0 top-1/2 cursor-pointer text-gray-500"
+					className="absolute top-1/2 right-0 cursor-pointer text-gray-500"
 				/>
 			</div>
 			<div className="flex items-center justify-center">

@@ -13,6 +13,7 @@
 	}
 
 	* {
+		font-family: Helvetica, Arial, sans-serif;
 		@apply m-0 box-border appearance-none p-0 focus:outline-none;
 	}
 
