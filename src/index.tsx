@@ -5,12 +5,12 @@ import { BrowserRouter } from "react-router";
 
 const rootEl = document.getElementById("root");
 if (rootEl) {
-	const root = ReactDOM.createRoot(rootEl);
-	root.render(
-		<React.StrictMode>
-			<BrowserRouter>
-				<App />
-			</BrowserRouter>
-		</React.StrictMode>,
-	);
+  const root = ReactDOM.createRoot(rootEl);
+  root.render(
+    <React.StrictMode>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </React.StrictMode>,
+  );
 }
